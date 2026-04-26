@@ -194,4 +194,706 @@
 
   /* TOAST */
   .toast-wrap { position:fixed; bottom:1.5rem; right:1.5rem; z-index:999; display:flex; flex-direction:column; gap:0.5rem; }
-  .toast { background:var(--navy); color:white; padding:0.7rem 1.2rem; b
+  .toast { background:var(--navy); color:white; padding:0.7rem 1.2rem; border-radius:4px; border-left:4px solid var(--gold); font-family:'Source Code Pro',monospace; font-size:0.82rem; box-shadow:0 4px 16px rgba(0,0,0,0.4); animation:toastIn 0.3s ease; }
+  @keyframes toastIn { from{transform:translateX(60px);opacity:0;} to{transform:translateX(0);opacity:1;} }
+
+  /* PRINT */
+  .print-header { display:none; }
+  @media print {
+    body { background:white; }
+    .topbar,.filter-bar,.stats-strip,.entry-form-wrap,.action-btns,.nav-btn,.form-footer,
+    .entry-form-panel,.panel-header,.login-screen,.toast-wrap,.ob-watermark,.session-pill { display:none !important; }
+    .main { padding:0; max-width:100%; }
+    .panel { box-shadow:none; border:1px solid #ccc; }
+    .print-header { display:block !important; text-align:center; padding:1rem; border-bottom:3px double #001435; margin-bottom:1rem; }
+    .print-header h1 { font-family:'IM Fell English',serif; font-size:1.4rem; color:#001435; }
+    table { font-size:0.82rem; }
+    thead th { background:#eee !important; -webkit-print-color-adjust:exact; }
+  }
+  .ob-watermark { position:fixed; bottom:1rem; left:1rem; font-family:'Source Code Pro',monospace; font-size:0.65rem; color:rgba(255,255,255,0.2); letter-spacing:2px; text-transform:uppercase; pointer-events:none; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-header">
+      <div class="login-shield"><img src="home/themooch/Documents/CODE/HTML/O.B/Images/ZP_logo.png" alt="Zambia Police Logo" style="width:60%; height:auto; object-fit:contain;"></div>
+      <h1>Zambia Police Service</h1>
+      <p>· Occurrence Book System ·</p>
+    </div>
+    <div class="login-body">
+      <h2><i class="fas fa-lock" style="color:var(--gold);margin-right:6px;"></i>Officer Sign In</h2>
+      <div class="login-error" id="loginError"><i class="fas fa-exclamation-circle"></i> &nbsp;<span id="loginErrorMsg"></span></div>
+      <div class="lgroup">
+        <label><i class="fas fa-user"></i>Username</label>
+        <input type="text" id="loginUser" placeholder="Enter your username" autocomplete="username">
+      </div>
+      <div class="lgroup">
+        <label><i class="fas fa-key"></i>Password</label>
+        <input type="password" id="loginPass" placeholder="Enter your password" autocomplete="current-password">
+      </div>
+      <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> &nbsp;SIGN IN</button>
+      <p style="font-family:'Source Code Pro',monospace;font-size:0.68rem;color:var(--muted);text-align:center;margin-top:1.2rem;">Contact your Station Administrator to obtain login credentials.</p>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="print-header">
+    <h1>ZAMBIA POLICE SERVICE · OCCURRENCE BOOK (O.B.)</h1>
+    <p>Official Record · Printed on <span id="printDate"></span></p>
+  </div>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="shield-wrap"><img src="home/themooch/Documents/CODE/HTML/O.B/Images/ZP_logo.png" alt="Zambia Police Logo" style="width:70%; height:auto; object-fit:contain"></div>
+      <div class="force-title">
+        <h1>Zambia Police Service</h1>
+        <span>· Service · Integrity · Professionalism ·</span>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <div id="liveClock">00:00:00</div>
+      <div id="liveDate2"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="session-pill"><div class="role-dot" id="sessionDot"></div><span id="sessionLabel">—</span></div>
+      <button class="nav-btn active" id="btnBook" onclick="showView('book')"><i class="fas fa-book-open"></i> OB Entries</button>
+      <button class="nav-btn" id="btnNew" onclick="showView('new')"><i class="fas fa-pen"></i> New Entry</button>
+      <button class="nav-btn admin-only" id="btnAdmin" onclick="showView('admin')" style="display:none;"><i class="fas fa-users-cog"></i> Admin</button>
+      <button class="nav-btn" onclick="printOB()"><i class="fas fa-print"></i> Print</button>
+      <button class="nav-btn" onclick="exportCSV()"><i class="fas fa-file-csv"></i> Export</button>
+      <button class="nav-btn" onclick="doLogout()" style="border-color:rgba(255,100,100,0.5);"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- OB ENTRIES VIEW -->
+    <div id="viewBook">
+      <div class="panel">
+        <div class="stats-strip">
+          <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Total Entries</div></div>
+          <div class="stat-card"><div class="stat-num" id="statToday">0</div><div class="stat-label">Today</div></div>
+          <div class="stat-card highlight"><div class="stat-num" id="statAssault">0</div><div class="stat-label">Assault</div></div>
+          <div class="stat-card"><div class="stat-num" id="statTheft">0</div><div class="stat-label">Theft</div></div>
+          <div class="stat-card"><div class="stat-num" id="statTraffic">0</div><div class="stat-label">Traffic</div></div>
+          <div class="stat-card"><div class="stat-num" id="statOfficers">0</div><div class="stat-label">Officers</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h2><i class="fas fa-book-open"></i> Occurrence Book — General Entries</h2>
+          <span class="badge" id="entryCountBadge">0 entries</span>
+        </div>
+        <div class="filter-bar">
+          <div class="search-wrap"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search entries..." oninput="applyFilters()"></div>
+          <span class="filter-label">Date:</span>
+          <input type="date" class="filter-select" id="filterDate" onchange="applyFilters()">
+          <span class="filter-label">Category:</span>
+          <select class="filter-select" id="filterCat" onchange="applyFilters()">
+            <option value="">All</option><option value="assault">Assault</option>
+            <option value="theft">Theft</option><option value="traffic">Traffic</option>
+            <option value="domestic">Domestic</option><option value="fraud">Fraud</option><option value="other">Other</option>
+          </select>
+          <span class="filter-label">Show:</span>
+          <select class="filter-select" id="pageSize" onchange="applyFilters()">
+            <option value="10">10</option><option value="25" selected>25</option><option value="50">50</option><option value="100">100</option>
+          </select>
+          <button class="btn-sm btn-outline" onclick="clearFilters()"><i class="fas fa-times"></i> Clear</button>
+          <button class="btn-sm btn-navy" onclick="showView('new')"><i class="fas fa-plus"></i> New Entry</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="sortBy('ref')" id="th-ref"># REF <i class="fas fa-sort sort-icon"></i></th>
+                <th onclick="sortBy('date')" id="th-date">DATE <i class="fas fa-sort sort-icon"></i></th>
+                <th onclick="sortBy('time')" id="th-time">TIME <i class="fas fa-sort sort-icon"></i></th>
+                <th onclick="sortBy('category')" id="th-category">CATEGORY <i class="fas fa-sort sort-icon"></i></th>
+                <th onclick="sortBy('offence')" id="th-offence">OFFENCE / INCIDENT <i class="fas fa-sort sort-icon"></i></th>
+                <th>OCCURRENCE DETAILS</th>
+                <th onclick="sortBy('officer')" id="th-officer">OFFICER <i class="fas fa-sort sort-icon"></i></th>
+                <th style="cursor:default">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination"><span id="paginationInfo">No entries</span><div class="page-btns" id="pageButtons"></div></div>
+      </div>
+    </div>
+
+    <!-- NEW ENTRY VIEW -->
+    <div id="viewNew" style="display:none;">
+      <div class="panel entry-form-panel">
+        <div class="panel-header">
+          <h2><i class="fas fa-pen-nib"></i> Record New Occurrence</h2>
+          <button class="nav-btn" onclick="showView('book')" style="font-size:0.75rem;"><i class="fas fa-arrow-left"></i> Back</button>
+        </div>
+        <div class="entry-form-wrap">
+          <div class="form-grid">
+            <div class="fgroup"><label><i class="fas fa-clock"></i>Time</label><input type="time" id="newTime"></div>
+            <div class="fgroup"><label><i class="fas fa-calendar"></i>Date</label><input type="date" id="newDate"></div>
+            <div class="fgroup"><label><i class="fas fa-tag"></i>Category</label>
+              <select id="newCategory">
+                <option value="other">Other</option><option value="assault">Assault</option>
+                <option value="theft">Theft</option><option value="traffic">Traffic</option>
+                <option value="domestic">Domestic</option><option value="fraud">Fraud</option>
+              </select>
+            </div>
+            <div class="fgroup"><label><i class="fas fa-user-shield"></i>Recording Officer</label>
+              <input type="text" id="newOfficer" readonly style="background:#f0ede8;color:var(--muted);cursor:not-allowed;" title="Automatically set from your login">
+            </div>
+          </div>
+          <div class="form-grid" style="grid-template-columns:2fr 3fr;">
+            <div class="fgroup"><label><i class="fas fa-gavel"></i>Offence / Incident</label><input type="text" id="newOffence" placeholder="e.g. Theft of motor vehicle"></div>
+            <div class="fgroup"><label><i class="fas fa-align-left"></i>Full Occurrence Details</label>
+              <textarea id="newOccurrence" placeholder="Full account: complainants, suspects, witnesses, location, actions taken..."></textarea>
+            </div>
+          </div>
+          <div class="form-footer">
+            <span class="form-hint"><i class="fas fa-info-circle"></i> Reference number assigned automatically. Officer pre-filled from your session.</span>
+            <div style="display:flex;gap:0.8rem;">
+              <button class="btn-sm btn-outline" onclick="resetForm()"><i class="fas fa-redo"></i> Clear</button>
+              <button class="submit-btn" onclick="addEntry()"><i class="fas fa-stamp"></i> Enter in Occurrence Book</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN VIEW -->
+    <div id="viewAdmin" style="display:none;">
+
+      <!-- Officer accounts panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2><i class="fas fa-users-cog"></i> Officer Account Management</h2>
+          <span class="admin-badge"><i class="fas fa-crown"></i> ADMINISTRATOR</span>
+        </div>
+        <div class="add-officer-form">
+          <h3><i class="fas fa-user-plus"></i> Add New Officer Account</h3>
+          <div class="officer-form-row">
+            <div class="fgroup"><label><i class="fas fa-id-badge"></i>Full Name / Rank</label><input type="text" id="newOName" placeholder="e.g. Insp. P. Banda"></div>
+            <div class="fgroup"><label><i class="fas fa-at"></i>Username</label><input type="text" id="newOUser" placeholder="e.g. p.banda"></div>
+            <div class="fgroup"><label><i class="fas fa-key"></i>Password</label><input type="password" id="newOPass" placeholder="Min. 6 characters"></div>
+            <div class="fgroup"><label><i class="fas fa-user-tag"></i>Role</label>
+              <select id="newORole"><option value="officer">Officer</option><option value="admin">Administrator</option></select>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:1rem;">
+            <button class="submit-btn" onclick="addOfficer()" style="font-size:0.85rem;padding:0.55rem 1.4rem;"><i class="fas fa-user-plus"></i> Create Account</button>
+          </div>
+        </div>
+        <div class="officers-grid">
+          <table class="officers-table">
+            <thead><tr><th>#</th><th>Name / Rank</th><th>Username</th><th>Role</th><th>Entries</th><th>Actions</th></tr></thead>
+            <tbody id="officersBody"></tbody>
+          </tr>
+        </div>
+      </div>
+
+      <!-- Admin entry deletion panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2><i class="fas fa-trash-alt"></i> Administrative Entry Deletion</h2>
+          <span class="admin-badge"><i class="fas fa-shield-halved"></i> ADMIN ONLY</span>
+        </div>
+        <div style="padding:1rem 1.5rem;background:#fef8f0;border-bottom:1px solid var(--rule);">
+          <p style="font-family:'Source Code Pro',monospace;font-size:0.78rem;color:var(--muted);line-height:1.7;">
+            <i class="fas fa-info-circle" style="color:var(--gold);margin-right:6px;"></i>
+            Administrators may delete any entry on behalf of any officer. A mandatory reason must be provided and is permanently recorded in the audit log below.
+          </p>
+        </div>
+        <div style="padding:1.5rem;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="background:#f5e8e8;color:#6b1010;font-family:'Source Code Pro',monospace;font-size:0.7rem;letter-spacing:1px;padding:9px 12px;border-bottom:2px solid #e0a0a0;">REF</th>
+                  <th style="background:#f5e8e8;color:#6b1010;font-family:'Source Code Pro',monospace;font-size:0.7rem;letter-spacing:1px;padding:9px 12px;border-bottom:2px solid #e0a0a0;">DATE &amp; TIME</th>
+                  <th style="background:#f5e8e8;color:#6b1010;font-family:'Source Code Pro',monospace;font-size:0.7rem;letter-spacing:1px;padding:9px 12px;border-bottom:2px solid #e0a0a0;">OFFENCE</th>
+                  <th style="background:#f5e8e8;color:#6b1010;font-family:'Source Code Pro',monospace;font-size:0.7rem;letter-spacing:1px;padding:9px 12px;border-bottom:2px solid #e0a0a0;">OFFICER</th>
+                  <th style="background:#f5e8e8;color:#6b1010;font-family:'Source Code Pro',monospace;font-size:0.7rem;letter-spacing:1px;padding:9px 12px;border-bottom:2px solid #e0a0a0;cursor:default">ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="adminEntryBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Audit Log -->
+        <div style="border-top:2px solid var(--rule);padding:1.5rem;">
+          <div style="font-family:'Source Code Pro',monospace;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--navy2);margin-bottom:0.8rem;">
+            <i class="fas fa-clipboard-list" style="color:var(--gold);margin-right:6px;"></i>Deletion Audit Log
+          </div>
+          <div id="auditLog" style="font-family:'Source Code Pro',monospace;font-size:0.78rem;color:var(--muted);max-height:220px;overflow-y:auto;background:var(--cream);border:1px solid var(--rule);border-radius:3px;padding:0.8rem;">
+            <em>No deletions recorded.</em>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /viewAdmin -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- VIEW ENTRY MODAL -->
+<div class="modal-overlay" id="viewModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle"><i class="fas fa-file-alt"></i> &nbsp;ENTRY DETAILS</h3>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" onclick="closeModal()">Close</button>
+      <button class="btn-sm btn-navy" onclick="printModal()"><i class="fas fa-print"></i> Print Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN DELETE REASON MODAL -->
+<div class="modal-overlay delete-modal" id="deleteModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3><i class="fas fa-trash-alt"></i> &nbsp;Confirm Administrative Deletion</h3>
+      <button class="modal-close" onclick="closeDeleteModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="deletePreview" style="background:#fce8e8;border:1px solid #e0a0a0;border-left:3px solid var(--red);padding:0.8rem 1rem;border-radius:3px;margin-bottom:1.2rem;font-family:'Source Code Pro',monospace;font-size:0.82rem;color:var(--red);line-height:1.6;"></div>
+      <div class="modal-field">
+        <div class="modal-field-label"><i class="fas fa-edit" style="margin-right:5px;"></i>Reason for Deletion — mandatory, permanently logged</div>
+        <textarea id="deleteReason" style="width:100%;padding:0.7rem;border:2px solid #e0a0a0;border-radius:3px;font-family:'Libre Baskerville',serif;font-size:0.9rem;min-height:90px;outline:none;resize:vertical;color:var(--ink);" placeholder="State the official reason for deleting this entry..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-sm btn-red" onclick="confirmAdminDelete()"><i class="fas fa-trash"></i> Permanently Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+<div class="ob-watermark">ZAMBIA POLICE · O.B. SYSTEM</div>
+
+<script>
+// ── KEYS ──
+const SK_RECORDS  = 'zp_ob_entries';
+const SK_OFFICERS = 'zp_ob_officers';
+const SK_AUDIT    = 'zp_ob_audit';
+
+// ── STATE ──
+let records = [], filteredRecords = [], officers = [], auditLog = [];
+let currentUser = null, sortCol = 'ref', sortDir = 1, currentPage = 1;
+let currentModal = null, pendingDeleteId = null;
+
+// ── LOAD / SAVE ──
+function load() {
+  try { records  = JSON.parse(localStorage.getItem(SK_RECORDS))  || []; } catch(e){ records  = []; }
+  try { officers = JSON.parse(localStorage.getItem(SK_OFFICERS)) || []; } catch(e){ officers = []; }
+  try { auditLog = JSON.parse(localStorage.getItem(SK_AUDIT))    || []; } catch(e){ auditLog = []; }
+  if (!officers.length) {
+    officers = [{ id:1, name:'Station Commander', username:'admin', password:'Admin1234', role:'admin' }];
+    saveOfficers();
+  }
+}
+function saveRecords()  { try{ localStorage.setItem(SK_RECORDS,  JSON.stringify(records));  }catch(e){} }
+function saveOfficers() { try{ localStorage.setItem(SK_OFFICERS, JSON.stringify(officers)); }catch(e){} }
+function saveAudit()    { try{ localStorage.setItem(SK_AUDIT,    JSON.stringify(auditLog)); }catch(e){} }
+
+// ── HELPERS ──
+function fmtDate(d) { return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`; }
+function p2(n) { return String(n).padStart(2,'0'); }
+function fmtDateHuman(s) { return new Date(s+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}); }
+function fmtRef(id) {
+  const r = records.find(x=>x.id===id); if(!r) return '?';
+  const yr = (r.date||'').slice(0,4);
+  const pos = records.filter(x=>(x.date||'').slice(0,4)===yr).sort((a,b)=>a.id-b.id).findIndex(x=>x.id===id);
+  return `${pos>=0?pos+1:'?'}/${yr}`;
+}
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function tagCls(c) { return {theft:'tag-theft',assault:'tag-assault',traffic:'tag-traffic',domestic:'tag-domestic',fraud:'tag-fraud',other:'tag-other'}[c]||'tag-other'; }
+function nextId() { return records.length?Math.max(...records.map(r=>r.id))+1:1; }
+function nextOId(){ return officers.length?Math.max(...officers.map(o=>o.id))+1:1; }
+
+// ── CLOCK ──
+function tick() {
+  const n=new Date();
+  document.getElementById('liveClock').textContent=`${p2(n.getHours())}:${p2(n.getMinutes())}:${p2(n.getSeconds())}`;
+  const ld=document.getElementById('liveDate2'); if(ld) ld.textContent=n.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const pd=document.getElementById('printDate'); if(pd) pd.textContent=n.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+}
+setInterval(tick,1000); tick();
+
+// ── AUTH ──
+function doLogin() {
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  const o=officers.find(x=>x.username===u&&x.password===p);
+  const errEl=document.getElementById('loginError');
+  if(!o){
+    document.getElementById('loginErrorMsg').textContent='Invalid username or password.';
+    errEl.classList.add('show');
+    document.getElementById('loginPass').value='';
+    return;
+  }
+  errEl.classList.remove('show');
+  currentUser={id:o.id,username:o.username,name:o.name,role:o.role};
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  syncDataFromStorage();   // Load latest data and sync UI after login
+  document.getElementById('sessionLabel').textContent=`${o.name} · ${o.role.toUpperCase()}`;
+  const dot=document.getElementById('sessionDot'); dot.className='role-dot '+o.role;
+  document.getElementById('btnAdmin').style.display=o.role==='admin'?'':'none';
+  document.getElementById('newOfficer').value=o.name;
+  showView('book'); applyFilters();
+}
+['loginUser','loginPass'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); }));
+
+function doLogout() {
+  currentUser=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').classList.remove('show');
+}
+
+// ── VIEWS ──
+function showView(v) {
+  ['book','new','admin'].forEach(n=>{ document.getElementById('view'+n.charAt(0).toUpperCase()+n.slice(1)).style.display=n===v?'':'none'; });
+  ['btnBook','btnNew','btnAdmin'].forEach(id=>{ const el=document.getElementById(id); if(el)el.classList.remove('active'); });
+  const m={book:'btnBook',new:'btnNew',admin:'btnAdmin'}; if(m[v]) document.getElementById(m[v])?.classList.add('active');
+  if(v==='new')  prefillForm();
+  if(v==='book') renderTable();
+  if(v==='admin'){ if(currentUser?.role==='admin') renderAdmin(); else { toast('Admin access required.','warn'); showView('book'); } }
+}
+
+function prefillForm() {
+  const n=new Date();
+  document.getElementById('newDate').value=fmtDate(n);
+  document.getElementById('newTime').value=`${p2(n.getHours())}:${p2(n.getMinutes())}`;
+  if(currentUser) document.getElementById('newOfficer').value=currentUser.name;
+}
+
+// ── STATS ──
+function updateStats() {
+  const today=fmtDate(new Date());
+  document.getElementById('statTotal').textContent=records.length;
+  document.getElementById('statToday').textContent=records.filter(r=>r.date===today).length;
+  document.getElementById('statAssault').textContent=records.filter(r=>r.category==='assault').length;
+  document.getElementById('statTheft').textContent=records.filter(r=>r.category==='theft').length;
+  document.getElementById('statTraffic').textContent=records.filter(r=>r.category==='traffic').length;
+  document.getElementById('statOfficers').textContent=new Set(records.map(r=>(r.officer||'').trim().toLowerCase())).size;
+}
+
+// ── FILTER / SORT ──
+function applyFilters() {
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const fd=document.getElementById('filterDate').value;
+  const fc=document.getElementById('filterCat').value;
+  filteredRecords=records.filter(r=>{
+    if(fd&&r.date!==fd) return false;
+    if(fc&&r.category!==fc) return false;
+    if(q&&!`${r.offence} ${r.occurrence} ${r.officer} ${r.date}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  filteredRecords.sort((a,b)=>{
+    let va=sortCol==='ref'?a.id:(a[sortCol]??''), vb=sortCol==='ref'?b.id:(b[sortCol]??'');
+    if(sortCol==='date'){va=a.date+a.time;vb=b.date+b.time;}
+    if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}
+    return va<vb?-sortDir:va>vb?sortDir:0;
+  });
+  currentPage=1; renderTable();
+}
+
+function sortBy(col) {
+  sortDir=sortCol===col?sortDir*-1:1; sortCol=col;
+  document.querySelectorAll('thead th').forEach(t=>t.classList.remove('sorted'));
+  const t=document.getElementById('th-'+col); if(t)t.classList.add('sorted');
+  applyFilters();
+}
+function clearFilters() { ['searchInput','filterDate','filterCat'].forEach(id=>{const el=document.getElementById(id);if(el.tagName==='SELECT')el.value='';else el.value='';}); applyFilters(); }
+
+// ── RENDER TABLE ──
+function renderTable() {
+  updateStats();
+  const ps=parseInt(document.getElementById('pageSize').value)||25;
+  const total=filteredRecords.length, pages=Math.ceil(total/ps)||1;
+  currentPage=Math.min(currentPage,pages);
+  const start=(currentPage-1)*ps, slice=filteredRecords.slice(start,start+ps);
+  document.getElementById('entryCountBadge').textContent=`${total} entr${total!==1?'ies':'y'}`;
+  const tbody=document.getElementById('tableBody');
+  const isAdmin=currentUser?.role==='admin';
+  if(!slice.length){
+    tbody.innerHTML=`<tr><td colspan="8"><div class="empty-state"><i class="fas fa-book-open"></i>The Occurrence Book is clear — no entries recorded.<br><span class="start-msg">Use the <strong>New Entry</strong> button above to begin recording occurrences.</span></div></td></tr>`;
+  } else {
+    tbody.innerHTML=slice.map(r=>`
+      <tr>
+        <td><div class="entry-num"><div class="entry-dot"></div>${fmtRef(r.id)}</div></td>
+        <td style="white-space:nowrap;font-family:'Source Code Pro',monospace;font-size:0.82rem;">${fmtDateHuman(r.date)}</td>
+        <td><span class="time-badge">${esc(r.time)}</span></td>
+        <td><span class="offence-tag ${tagCls(r.category)}">${esc(r.category)}</span></td>
+        <td style="font-weight:600;max-width:200px;">${esc(r.offence)}</td>
+        <td><div class="occurrence-text">${esc(r.occurrence.length>120?r.occurrence.slice(0,120)+'…':r.occurrence)}</div></td>
+        <td><span class="officer-badge"><i class="fas fa-user-shield"></i>${esc(r.officer)}</span></td>
+        <td><div class="action-btns">
+          <button class="act-btn" title="View" onclick="viewEntry(${r.id})"><i class="fas fa-eye"></i></button>
+          ${isAdmin?`<button class="act-btn del" title="Admin delete" onclick="promptAdminDelete(${r.id})"><i class="fas fa-trash"></i></button>`:''}
+        </div></td>
+      </tr>`).join('');
+  }
+  const infoEl=document.getElementById('paginationInfo');
+  infoEl.textContent=total?`Showing ${start+1}–${Math.min(start+ps,total)} of ${total} entries`:'No entries';
+  const pb=document.getElementById('pageButtons'); pb.innerHTML='';
+  if(pages>1){
+    const mk=(lbl,pg,ic)=>{ const b=document.createElement('button'); b.className='page-btn'+(pg===currentPage?' active':''); b.innerHTML=ic?`<i class="fas fa-${ic}"></i>`:lbl; b.onclick=()=>{currentPage=pg;renderTable();}; pb.appendChild(b); };
+    mk('',Math.max(1,currentPage-1),'chevron-left');
+    for(let p=Math.max(1,currentPage-2);p<=Math.min(pages,currentPage+2);p++) mk(p,p);
+    mk('',Math.min(pages,currentPage+1),'chevron-right');
+  }
+}
+
+// ── ADD ENTRY ──
+function addEntry() {
+  const time=document.getElementById('newTime').value.trim();
+  const date=document.getElementById('newDate').value.trim();
+  const category=document.getElementById('newCategory').value;
+  const offence=document.getElementById('newOffence').value.trim();
+  const occurrence=document.getElementById('newOccurrence').value.trim();
+  const officer=document.getElementById('newOfficer').value.trim();
+  if(!time){toast('Please enter the time.','warn');return;}
+  if(!date){toast('Please enter the date.','warn');return;}
+  if(!offence){toast('Offence/incident is required.','warn');return;}
+  if(!occurrence){toast('Occurrence details are required.','warn');return;}
+  if(!officer){toast("Officer name is required.",'warn');return;}
+  const entry={id:nextId(),date,time,category,offence,occurrence,officer,recordedBy:currentUser?.username};
+  records.push(entry); saveRecords();
+  toast(`Entry ${fmtRef(entry.id)} recorded in the Occurrence Book.`);
+  resetForm(); showView('book'); applyFilters();
+}
+function resetForm() {
+  document.getElementById('newOffence').value='';
+  document.getElementById('newOccurrence').value='';
+  document.getElementById('newCategory').value='other';
+  prefillForm();
+}
+
+// ── VIEW MODAL ──
+function viewEntry(id) {
+  const r=records.find(x=>x.id===id); if(!r)return;
+  currentModal=r;
+  document.getElementById('modalTitle').innerHTML=`<i class="fas fa-file-alt"></i> &nbsp;ENTRY ${fmtRef(r.id)}`;
+  document.getElementById('modalBody').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+      <div class="modal-field"><div class="modal-field-label">Reference No.</div><div class="modal-field-val" style="font-family:'Source Code Pro',monospace;font-size:1.1rem;font-weight:700;">${fmtRef(r.id)}</div></div>
+      <div class="modal-field"><div class="modal-field-label">Date &amp; Time</div><div class="modal-field-val">${fmtDateHuman(r.date)} · ${r.time}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+      <div class="modal-field"><div class="modal-field-label">Category</div><div class="modal-field-val"><span class="offence-tag ${tagCls(r.category)}">${esc(r.category)}</span></div></div>
+      <div class="modal-field"><div class="modal-field-label">Recording Officer</div><div class="modal-field-val"><span class="officer-badge"><i class="fas fa-user-shield"></i>${esc(r.officer)}</span></div></div>
+    </div>
+    <div class="modal-field"><div class="modal-field-label">Offence / Incident</div><div class="modal-field-val" style="font-weight:700;">${esc(r.offence)}</div></div>
+    <div class="modal-field"><div class="modal-field-label">Full Occurrence Details</div><div class="modal-field-val" style="white-space:pre-wrap;line-height:1.7;">${esc(r.occurrence)}</div></div>`;
+  document.getElementById('viewModal').classList.add('open');
+}
+function closeModal(){ document.getElementById('viewModal').classList.remove('open'); currentModal=null; }
+function printModal(){
+  if(!currentModal)return; const r=currentModal;
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>OB ${fmtRef(r.id)}</title><style>body{font-family:Georgia,serif;margin:2rem;}h1{font-size:1.1rem;border-bottom:2px solid #001435;margin-bottom:1rem;}table{width:100%;border-collapse:collapse;}td{padding:8px;border:1px solid #ccc;font-size:0.9rem;}.l{font-weight:700;background:#eee;width:30%;}footer{margin-top:2rem;font-size:0.75rem;color:#666;border-top:1px solid #ccc;padding-top:0.5rem;}</style></head><body>
+  <h1>ZAMBIA POLICE SERVICE · OCCURRENCE BOOK</h1><table>
+  <tr><td class="l">Reference</td><td>${fmtRef(r.id)}</td><td class="l">Date</td><td>${fmtDateHuman(r.date)}</td></tr>
+  <tr><td class="l">Time</td><td>${r.time}</td><td class="l">Category</td><td>${r.category.toUpperCase()}</td></tr>
+  <tr><td class="l">Officer</td><td>${r.officer}</td><td class="l">Offence</td><td>${r.offence}</td></tr>
+  <tr><td class="l">Occurrence</td><td colspan="3" style="white-space:pre-wrap;">${r.occurrence}</td></tr>
+  </table><footer>Printed: ${new Date().toLocaleString('en-GB')} · ZAMBIA POLICE SERVICE</footer></body></html>`);
+  w.document.close(); w.print();
+}
+document.getElementById('viewModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+// ── ADMIN DELETE ──
+function promptAdminDelete(id) {
+  if(!currentUser||currentUser.role!=='admin'){toast('Administrator access required.','warn');return;}
+  const r=records.find(x=>x.id===id); if(!r)return;
+  pendingDeleteId=id;
+  document.getElementById('deletePreview').innerHTML=
+    `<i class="fas fa-exclamation-triangle" style="margin-right:6px;"></i>
+     You are about to permanently delete:<br>
+     <strong>Entry ${fmtRef(r.id)}</strong> &nbsp;·&nbsp; ${fmtDateHuman(r.date)} at ${r.time}
+     &nbsp;·&nbsp; <em>${esc(r.offence)}</em><br>
+     Recorded by: ${esc(r.officer)}`;
+  document.getElementById('deleteReason').value='';
+  document.getElementById('deleteModal').classList.add('open');
+}
+function closeDeleteModal(){ document.getElementById('deleteModal').classList.remove('open'); pendingDeleteId=null; }
+function confirmAdminDelete(){
+  if(!pendingDeleteId)return;
+  const reason=document.getElementById('deleteReason').value.trim();
+  if(!reason){toast('A deletion reason is mandatory.','warn');document.getElementById('deleteReason').focus();return;}
+  const r=records.find(x=>x.id===pendingDeleteId); if(!r){closeDeleteModal();return;}
+  const log={
+    timestamp:new Date().toISOString(),
+    adminUser:currentUser.username, adminName:currentUser.name,
+    deletedRef:fmtRef(r.id), deletedOfficer:r.officer,
+    deletedOffence:r.offence, deletedDate:r.date, reason
+  };
+  auditLog.unshift(log); saveAudit();
+  records=records.filter(x=>x.id!==pendingDeleteId); saveRecords();
+  closeDeleteModal();
+  toast(`Entry ${log.deletedRef} permanently deleted. Reason recorded in audit log.`);
+  syncDataFromStorage();   // Refresh everything after deletion
+}
+document.getElementById('deleteModal').addEventListener('click',function(e){if(e.target===this)closeDeleteModal();});
+
+// ── ADMIN RENDER ──
+function renderAdmin(){
+  // Officers list
+  const ob=document.getElementById('officersBody');
+  ob.innerHTML=officers.map((o,i)=>{
+    const cnt=records.filter(r=>r.recordedBy===o.username).length;
+    const isMe=o.username===currentUser?.username;
+    return `<tr>
+      <td style="font-family:'Source Code Pro',monospace;font-size:0.85rem;">${i+1}</td>
+      <td style="font-weight:600;">${esc(o.name)}${isMe?' <span style="font-size:0.68rem;color:var(--muted);font-family:\'Source Code Pro\',monospace;">(you)</span>':''}</td>
+      <td style="font-family:'Source Code Pro',monospace;font-size:0.82rem;">${esc(o.username)}</td>
+      <td><span class="role-badge role-${o.role}">${o.role}</span></td>
+      <td style="font-family:'Source Code Pro',monospace;text-align:center;">${cnt}</td>
+      <td>${!isMe?`<button class="btn-sm btn-red" onclick="removeOfficer(${o.id})"><i class="fas fa-user-minus"></i> Remove</button>`:'<span style="font-size:0.75rem;color:var(--muted);">—</span>'}</td>
+    </tr>`;
+  }).join('');
+  if(!officers.length) ob.innerHTML=`<tr><td colspan="6"><div class="empty-state"><i class="fas fa-users"></i>No accounts.</div></td></tr>`;
+
+  // Admin entry list
+  const ab=document.getElementById('adminEntryBody');
+  const sorted=[...records].sort((a,b)=>b.id-a.id);
+  ab.innerHTML=sorted.map(r=>`
+    <tr style="border-bottom:1px solid var(--rule);">
+      <td style="font-family:'Source Code Pro',monospace;font-weight:700;">${fmtRef(r.id)}</td>
+      <td style="font-family:'Source Code Pro',monospace;font-size:0.8rem;white-space:nowrap;">${fmtDateHuman(r.date)} ${r.time}</td>
+      <td style="max-width:260px;font-size:0.85rem;">${esc(r.offence)}</td>
+      <td><span class="officer-badge"><i class="fas fa-user-shield"></i>${esc(r.officer)}</span></td>
+      <td><button class="btn-sm btn-red" style="font-size:0.75rem;" onclick="promptAdminDelete(${r.id})"><i class="fas fa-trash"></i> Delete</button></td>
+    </tr>`).join('');
+  if(!records.length) ab.innerHTML=`<tr><td colspan="5" style="padding:1.5rem;text-align:center;font-family:'Source Code Pro',monospace;font-size:0.82rem;color:var(--muted);">No entries in the Occurrence Book.</td></tr>`;
+
+  // Audit log
+  const alEl=document.getElementById('auditLog');
+  alEl.innerHTML=!auditLog.length?'<em>No deletions recorded.</em>':auditLog.map(l=>{
+    const d=new Date(l.timestamp).toLocaleString('en-GB');
+    return `<div style="border-bottom:1px solid var(--rule);padding:0.5rem 0;margin-bottom:0.4rem;">
+      <span style="color:var(--red);font-weight:700;">[${d}]</span>
+      &nbsp;Admin <strong>${esc(l.adminName)}</strong> deleted entry <strong>${esc(l.deletedRef)}</strong>
+      (${esc(l.deletedOffence)} · ${esc(l.deletedOfficer)} · ${l.deletedDate}).
+      <br><span style="color:var(--muted);">Reason: ${esc(l.reason)}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── OFFICER MANAGEMENT ──
+function addOfficer(){
+  const name=document.getElementById('newOName').value.trim();
+  const user=document.getElementById('newOUser').value.trim().toLowerCase();
+  const pass=document.getElementById('newOPass').value;
+  const role=document.getElementById('newORole').value;
+  if(!name){toast('Full name / rank is required.','warn');return;}
+  if(!user){toast('Username is required.','warn');return;}
+  if(pass.length<6){toast('Password must be at least 6 characters.','warn');return;}
+  if(officers.find(o=>o.username===user)){toast(`Username "${user}" is already taken.`,'warn');return;}
+  officers.push({id:nextOId(),name,username:user,password:pass,role});
+  saveOfficers();
+  syncDataFromStorage();   // Refresh all views and UI
+  toast(`Account created: ${name} (${user})`);
+  ['newOName','newOUser','newOPass'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('newORole').value='officer';
+  renderAdmin();
+}
+function removeOfficer(id){
+  const o=officers.find(x=>x.id===id); if(!o)return;
+  if(o.username===currentUser?.username){toast("You cannot remove your own account.",'warn');return;}
+  if(!confirm(`Remove account for "${o.name}" (${o.username})?\n\nTheir recorded entries will not be deleted.`))return;
+  officers=officers.filter(x=>x.id!==id); saveOfficers();
+  syncDataFromStorage();   // Refresh, will log out current user if account was removed
+  toast(`Account for ${o.name} removed.`); renderAdmin();
+}
+
+// ── DATA SYNC & STORAGE LISTENER ──
+// Force reload all data from localStorage and refresh current view
+function syncDataFromStorage() {
+  // Reload arrays
+  try { records = JSON.parse(localStorage.getItem(SK_RECORDS)) || []; } catch(e){ records = []; }
+  try { officers = JSON.parse(localStorage.getItem(SK_OFFICERS)) || []; } catch(e){ officers = []; }
+  try { auditLog = JSON.parse(localStorage.getItem(SK_AUDIT)) || []; } catch(e){ auditLog = []; }
+  
+  // If current user's account was deleted, log out immediately
+  if (currentUser && !officers.find(o => o.username === currentUser.username)) {
+    toast('Your officer account has been removed by an administrator. You will be logged out.', 'warn');
+    doLogout();
+    return;
+  }
+  
+  // Update session pill / admin button visibility in case role changed
+  if (currentUser) {
+    const freshUser = officers.find(o => o.username === currentUser.username);
+    if (freshUser && freshUser.role !== currentUser.role) {
+      currentUser.role = freshUser.role;
+      document.getElementById('sessionLabel').textContent = `${freshUser.name} · ${freshUser.role.toUpperCase()}`;
+      const dot = document.getElementById('sessionDot');
+      dot.className = 'role-dot ' + freshUser.role;
+      document.getElementById('btnAdmin').style.display = freshUser.role === 'admin' ? '' : 'none';
+      toast(`Your role has been updated to ${freshUser.role}`, 'info');
+    }
+  }
+  
+  // Re-render whatever view is currently active
+  if (document.getElementById('viewBook').style.display !== 'none') {
+    applyFilters();       // re-filters & re-renders table, stats, pagination
+  } else if (document.getElementById('viewAdmin').style.display !== 'none') {
+    renderAdmin();        // refresh officer list, admin deletion table, audit log
+  } else if (document.getElementById('viewNew').style.display !== 'none') {
+    // No dynamic data needed for new entry form, but update officer name if changed
+    if (currentUser) document.getElementById('newOfficer').value = currentUser.name;
+  }
+  
+  // Always update global stats (for top panel)
+  updateStats();
+}
+
+// Listen for changes made in other tabs/windows
+window.addEventListener('storage', function(event) {
+  if (event.key === SK_RECORDS || event.key === SK_OFFICERS || event.key === SK_AUDIT) {
+    console.log(`Storage change detected: ${event.key} – syncing data`);
+    syncDataFromStorage();
+  }
+});
+
+// ── PRINT / EXPORT ──
+function printOB(){ window.print(); }
+function exportCSV(){
+  const rows=[['Ref','Date','Time','Category','Offence','Occurrence','Officer']];
+  filteredRecords.forEach(r=>rows.push([fmtRef(r.id),r.date,r.time,r.category,`"${(r.offence||'').replace(/"/g,'""')}"`,`"${(r.occurrence||'').replace(/"/g,'""')}"`,r.officer]));
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
+  a.download=`OB_Export_${fmtDate(new Date())}.csv`; a.click();
+  toast('CSV exported successfully.');
+}
+
+// ── TOAST ──
+function toast(msg,type='info'){
+  const el=document.createElement('div'); el.className='toast';
+  el.style.borderColor=type==='warn'?'#c84a00':'var(--gold)';
+  el.innerHTML=`<i class="fas fa-${type==='warn'?'exclamation-triangle':'check-circle'}" style="margin-right:8px;color:${type==='warn'?'#e06000':'var(--gold-light)'}"></i>${msg}`;
+  document.getElementById('toastWrap').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='0.3s';setTimeout(()=>el.remove(),300);},3500);
+}
+
+// ── INIT ──
+load();
+document.getElementById('th-ref').classList.add('sorted');
+</script>
+</body>
+</html>
