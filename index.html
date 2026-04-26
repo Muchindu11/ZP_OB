@@ -56,7 +56,8 @@
   .force-title h1 { font-family:'IM Fell English',serif; font-size:1.3rem; letter-spacing:3px; text-transform:uppercase; line-height:1.2; text-shadow:0 1px 6px rgba(0,0,0,0.7),0 0 2px rgba(0,0,0,0.9); }
   .force-title span { font-size:0.65rem; color:#b8860b; letter-spacing:2px; text-transform:uppercase; font-family:'Source Code Pro',monospace; text-shadow:0 1px 4px rgba(0,0,0,0.6); }
   .topbar-center { font-family:'Source Code Pro',monospace; color:#fff; font-size:0.85rem; text-align:center; line-height:1.6; text-shadow:0 1px 4px rgba(0,0,0,0.55); }
-  #liveClock { font-size:1.6rem; font-weight:700; letter-spacing:4px; }
+  #liveClock { font-size:1.6rem; font-weight:700; letter-spacing:4px; color:#4dff91; text-shadow:0 0 8px rgba(77,255,145,0.5); }
+  #liveDate2 { color:#7eb8ff; text-shadow:0 0 6px rgba(126,184,255,0.4); }
   .topbar-right { display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; }
   .session-pill { background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.4); border-radius:20px; padding:0.3rem 0.9rem; font-family:'Source Code Pro',monospace; font-size:0.75rem; color:white; display:flex; align-items:center; gap:6px; text-shadow:0 1px 3px rgba(0,0,0,0.6); }
   .role-dot { width:7px; height:7px; border-radius:50%; background:var(--gold-light); flex-shrink:0; }
@@ -498,7 +499,11 @@ function load() {
   try { officers = JSON.parse(localStorage.getItem(SK_OFFICERS)) || []; } catch(e){ officers = []; }
   try { auditLog = JSON.parse(localStorage.getItem(SK_AUDIT))    || []; } catch(e){ auditLog = []; }
   if (!officers.length) {
-    officers = [{ id:1, name:'Station Commander', username:'admin', password:'Admin1234', role:'admin' }];
+    officers = [
+      { id:1, name:'Station Commander', username:'admin', password:'Admin1234', role:'admin' },
+      { id:2, name:'Detective Constable Mululu', username:'d.c.mululu42', password:'042939', role:'officer' },
+      { id:3, name:'Detective Constable Chakulunta', username:'d.c.chakulunta53', password:'053724', role:'officer' }
+    ];
     saveOfficers();
   }
 }
